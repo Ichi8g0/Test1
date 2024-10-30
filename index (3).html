@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إشهار نصابين</title>
+    <style>
+        /* Reset and basic styling */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        /* Container styling */
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        /* Category section styling */
+        .category {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .category h2 {
+            color: #444;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        /* Photo grid styling */
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .photo-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.3s ease;
+            border-radius: 8px;
+        }
+
+        .photo-item:hover img {
+            transform: scale(1.05);
+        }
+
+        .delete-photo-button {
+            margin-top: 5px;
+            padding: 5px 10px;
+            background-color: #000;
+            color: #ff4d4d;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .delete-photo-button:hover {
+            background-color: #e60000;
+            color: #fff;
+        }
+
+        /* Text area styling */
+        .text-area {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            color: #555;
+        }
+
+        /* Button styling */
+        .button {
+            margin-top: 10px;
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #000;
+            color: #ff4d4d;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-right: 5px;
+        }
+
+        .button:hover {
+            background-color: #ff4d4d;
+            color: #fff;
+        }
+
+        /* Hidden file input styling */
+        .file-input {
+            display: none;
+        }
+    </style>
+    <script>
+        function uploadPhoto(input, photoGrid) {
+            const photos = photoGrid.querySelectorAll(".photo-item");
+            if (photos.length >= 5) {
+                alert("Maximum of 5 photos allowed per category.");
+                return;
+            }
+
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const photoItem = document.createElement("div");
+                    photoItem.className = "photo-item";
+                    photoItem.innerHTML = `
+                        <img src="${e.target.result}" alt="Uploaded Photo">
+                        <button class="delete-photo-button" onclick="deletePhoto(this)">Delete Photo</button>
+                    `;
+                    photoGrid.appendChild(photoItem);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function deletePhoto(button) {
+            button.parentElement.remove();
+        }
+
+        function renameCategory(categoryTitle) {
+            const currentName = categoryTitle.textContent;
+            if (currentName !== "New Category") return; // Prevent renaming after the first time
+
+            const newName = prompt("Enter new category name:");
+            if (newName) {
+                categoryTitle.textContent = newName;
+            }
+        }
+
+        function shareCategory(category) {
+            const title = category.querySelector('.category-title').textContent;
+            const description = category.querySelector('.text-area').innerText;
+            const photoElements = category.querySelectorAll('.photo-item img');
+            let photos = Array.from(photoElements).map(img => img.src);
+
+            const shareText = `Category: ${title}\nDescription: ${description}\nPhotos:\n` + photos.join("\n");
+
+            if (navigator.share) {
+                navigator.share({
+                    title: title,
+                    text: shareText,
+                }).then(() => {
+                    alert("Category information shared successfully!");
+                }).catch((error) => {
+                    alert("Error sharing: " + error);
+                });
+            } else {
+                alert("Sharing not supported on this device.");
+            }
+        }
+
+        function addCategory(container) {
+            const category = document.createElement("div");
+            category.className = "category";
+            category.innerHTML = `
+                <h2 class="category-title">New Category</h2>
+                <button class="button" onclick="renameCategory(this.parentElement.querySelector('.category-title'))">Rename Category</button>
+                <button class="button" onclick="shareCategory(this.parentElement)">Share Category</button>
+                <button class="button" onclick="this.parentElement.querySelector('.file-input').click()">Upload Photo</button>
+                <button class="button" onclick="deleteCategory(this.parentElement)">Delete Category</button>
+                <input type="file" class="file-input" accept="image/*" onchange="uploadPhoto(this, this.parentElement.querySelector('.photo-grid'))">
+                <div class="text-area" contenteditable="true">Write something about this category...</div>
+                <div class="photo-grid"></div>
+            `;
+            container.appendChild(category);
+        }
+
+        function deleteCategory(categoryElement) {
+            if (confirm("Are you sure you want to delete this category?")) {
+                categoryElement.remove();
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <h1>إشهار نصابين</h1>
+    <div class="container" id="categoryContainer">
+        <!-- Initial Category Example -->
+        <div class="category">
+            <h2 class="category-title">Category Name 1</h2>
+            <button class="button" onclick="shareCategory(this.parentElement)">Share Category</button>
+            <button class="button" onclick="this.parentElement.querySelector('.file-input').click()">Upload Photo</button>
+            <button class="button" onclick="deleteCategory(this.parentElement)">Delete Category</button>
+            <input type="file" class="file-input" accept="image/*" onchange="uploadPhoto(this, this.parentElement.querySelector('.photo-grid'))">
+            <div class="text-area" contenteditable="true">Write something about this category...</div>
+            <div class="photo-grid"></div>
+        </div>
+    </div>
+    
+    <!-- Add Category Button -->
+    <button class="button" onclick="addCategory(document.getElementById('categoryContainer'))" style="margin-top: 20px;">Add Category</button>
+
+</body>
+</html>
